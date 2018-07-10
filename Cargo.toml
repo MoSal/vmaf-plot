@@ -1,5 +1,6 @@
 [package]
 name = "vmaf-plot"
+description = "Plot graphs from JSON files produced by libvmaf (VMAF/MS_SSIM/PSNR)"
 version = "0.1.0"
 authors = ["Mohammad AlSaleh <CE.Mohammad.AlSaleh@gmail.com>"]
 
