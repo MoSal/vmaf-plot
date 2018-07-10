@@ -126,7 +126,10 @@ macro_rules! gen_figure {
                 out_file += &line.caption;
             }
         }
-        fg.set_terminal("pngcairo size 800, 600", &(out_file + ".png"))
+
+        out_file += ".png";
+        println!("Writing \"{}\"", out_file);
+        fg.set_terminal("pngcairo size 800, 600", &out_file)
             .show();
     };
 }
