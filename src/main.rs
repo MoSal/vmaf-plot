@@ -8,6 +8,32 @@ use gnuplot::{AxesCommon, Caption, Color, Coordinate::*, Figure, LabelOption::*}
 
 use std::{env, error::Error, fs, path::Path, process};
 
+struct FramesInfo {
+    caption: String,
+    label: String,
+    x: Vec<usize>,
+    y: Vec<f64>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct FrameMetrics {
+    vmaf: f64,
+    psnr: f64,
+    ms_ssim: f64,
+}
+
+#[derive(Serialize, Deserialize)]
+struct FrameInfo {
+    #[serde(rename = "frameNum")]
+    frame_idx: usize,
+    metrics: FrameMetrics,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Frames {
+    frames: Vec<FrameInfo>,
+}
+
 macro_rules! frames_info {
     ($lines:ident, $name:expr, $frames:ident, $metric:ident) => {
         let metric_name = stringify!($metric).to_uppercase();
@@ -103,32 +129,6 @@ macro_rules! gen_figure {
         fg.set_terminal("pngcairo size 800, 600", &(out_file + ".png"))
             .show();
     };
-}
-
-struct FramesInfo {
-    caption: String,
-    label: String,
-    x: Vec<usize>,
-    y: Vec<f64>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct FrameMetrics {
-    vmaf: f64,
-    psnr: f64,
-    ms_ssim: f64,
-}
-
-#[derive(Serialize, Deserialize)]
-struct FrameInfo {
-    #[serde(rename = "frameNum")]
-    frame_idx: usize,
-    metrics: FrameMetrics,
-}
-
-#[derive(Serialize, Deserialize)]
-struct Frames {
-    frames: Vec<FrameInfo>,
 }
 
 fn main() -> Result<(), Box<Error>> {
