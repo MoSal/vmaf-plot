@@ -135,7 +135,7 @@ fn main() -> Result<(), Box<Error>> {
     let prog_path = env::args().next().ok_or("No $0 !!!")?;
 
     if env::args().count() == 1 {
-        eprintln!("{} vmaf_json_file1 [vmaf_json_file2 ...]", prog_path);
+        eprintln!("Usage: {} vmaf_json_file1 [vmaf_json_file2 ...]", prog_path);
         process::exit(1);
     }
 
