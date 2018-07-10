@@ -66,7 +66,7 @@ macro_rules! gen_figure {
                 .set_y_label(&metric_name.replace('_', "\\\\\\_"), &[]);
 
             let colors = [
-                "#BB0000", "#00BB00", "#0000BB", "#BBBB00", "#BB00BB", "#00BBBB",
+                "#990000", "#009900", "#000099", "#999900", "#990099", "#009999",
             ];
             let mut color_idx = 0;
             let mut offset = 0.22;
