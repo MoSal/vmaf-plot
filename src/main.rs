@@ -1,19 +1,22 @@
-extern crate serde_json;
 extern crate gnuplot;
+extern crate serde_json;
 
 #[macro_use]
 extern crate serde_derive;
 
-use gnuplot::{Figure, Caption, Color, AxesCommon, Coordinate::*, LabelOption::*};
+use gnuplot::{AxesCommon, Caption, Color, Coordinate::*, Figure, LabelOption::*};
 
 use std::{env, error::Error, fs, path::Path, process};
 
 macro_rules! frames_info {
-    ($lines:ident, $name:expr, $frames:ident, $metric:ident) => (
+    ($lines:ident, $name:expr, $frames:ident, $metric:ident) => {
         let metric_name = stringify!($metric).to_uppercase();
-        
+
         let y: Vec<_> = if metric_name.ends_with("SSIM") {
-            $frames.iter().map(|f| 1.0/(1.0-f.metrics.$metric)).collect()
+            $frames
+                .iter()
+                .map(|f| 1.0 / (1.0 - f.metrics.$metric))
+                .collect()
         } else {
             $frames.iter().map(|f| f.metrics.$metric).collect()
         };
@@ -22,10 +25,17 @@ macro_rules! frames_info {
         vals.sort_by(|&v1, &v2| ((v1 * 10000.0) as isize).cmp(&((v2 * 10000.0) as isize)));
 
         let avg: f64 = vals.iter().sum::<f64>() / (vals.len() as f64);
-        let div: f64 = (vals.iter().map(|v| (v-avg).powf(2.0)).sum::<f64>() / (vals.len() - 1) as f64).powf(0.5);
+        let div: f64 = (vals.iter().map(|v| (v - avg).powf(2.0)).sum::<f64>()
+            / (vals.len() - 1) as f64)
+            .powf(0.5);
 
-        let label = format!("{:2.3}  {:2.3}  {:2.3}  {:2.3}",
-                              avg, div, vals[0], vals.last().unwrap());
+        let label = format!(
+            "{:2.3}  {:2.3}  {:2.3}  {:2.3}",
+            avg,
+            div,
+            vals[0],
+            vals.last().unwrap()
+        );
 
         let frames_info = FramesInfo {
             caption: $name.to_string(),
@@ -35,53 +45,65 @@ macro_rules! frames_info {
         };
 
         $lines.push(frames_info);
-    )
+    };
 }
 
 macro_rules! gen_figure {
-    ($lines:ident, $metric:ident) => (
-    let orig_metric_name = stringify!($metric).to_uppercase();
-    let mut metric_name = orig_metric_name.clone();
+    ($lines:ident, $metric:ident) => {
+        let orig_metric_name = stringify!($metric).to_uppercase();
+        let mut metric_name = orig_metric_name.clone();
 
-    if metric_name.ends_with("SSIM") {
-        metric_name = "1/(1-".to_owned() + &metric_name + ")";
-    }
-
-    let mut out_file = orig_metric_name;
-    let mut fg = Figure::new();
-    {
-        let mut fg_2d = fg.axes2d()
-            .set_x_label("Frames", &[])
-            .set_y_label(&metric_name.replace('_', "\\\\\\_"), &[]);
-
-
-        let colors = ["#BB0000", "#00BB00", "#0000BB", "#BBBB00", "#BB00BB", "#00BBBB"];
-        let mut color_idx = 0;
-        let mut offset = 0.22;
-
-        let status_line = format!("{:^6}  {:^6}  {:^6}  {:^6}", "avg", "div", "min", "max");
-        fg_2d = {fg_2d}.label(&status_line, Graph(0.02), Graph(offset), &[Font("monospace", 0.0)]);
-
-        for line in &$lines {
-            offset -= 0.05;
-            fg_2d = {fg_2d}.label(&line.label, Graph(0.02), Graph(offset), &[TextColor(colors[color_idx]), Font("monospace", 0.0)]);
-            fg_2d = {fg_2d}
-              .lines(
-                  &line.x,
-                  &line.y,
-                  &[Caption(&line.caption.replace('_', "\\\\\\_")), Color(colors[color_idx])],
-                  );
-            color_idx += 1;
-            out_file += "-";
-            out_file += &line.caption;
+        if metric_name.ends_with("SSIM") {
+            metric_name = "1/(1-".to_owned() + &metric_name + ")";
         }
-    }
-    fg
-        .set_terminal("pngcairo size 800, 600", &(out_file + ".png"))
-        .show();
-    )
-}
 
+        let mut out_file = orig_metric_name;
+        let mut fg = Figure::new();
+        {
+            let mut fg_2d = fg
+                .axes2d()
+                .set_x_label("Frames", &[])
+                .set_y_label(&metric_name.replace('_', "\\\\\\_"), &[]);
+
+            let colors = [
+                "#BB0000", "#00BB00", "#0000BB", "#BBBB00", "#BB00BB", "#00BBBB",
+            ];
+            let mut color_idx = 0;
+            let mut offset = 0.22;
+
+            let status_line = format!("{:^6}  {:^6}  {:^6}  {:^6}", "avg", "div", "min", "max");
+            fg_2d = { fg_2d }.label(
+                &status_line,
+                Graph(0.02),
+                Graph(offset),
+                &[Font("monospace", 0.0)],
+            );
+
+            for line in &$lines {
+                offset -= 0.05;
+                fg_2d = { fg_2d }.label(
+                    &line.label,
+                    Graph(0.02),
+                    Graph(offset),
+                    &[TextColor(colors[color_idx]), Font("monospace", 0.0)],
+                );
+                fg_2d = { fg_2d }.lines(
+                    &line.x,
+                    &line.y,
+                    &[
+                        Caption(&line.caption.replace('_', "\\\\\\_")),
+                        Color(colors[color_idx]),
+                    ],
+                );
+                color_idx += 1;
+                out_file += "-";
+                out_file += &line.caption;
+            }
+        }
+        fg.set_terminal("pngcairo size 800, 600", &(out_file + ".png"))
+            .show();
+    };
+}
 
 struct FramesInfo {
     caption: String,
@@ -99,7 +121,7 @@ struct FrameMetrics {
 
 #[derive(Serialize, Deserialize)]
 struct FrameInfo {
-    #[serde(rename="frameNum")]
+    #[serde(rename = "frameNum")]
     frame_idx: usize,
     metrics: FrameMetrics,
 }
@@ -113,9 +135,9 @@ fn main() -> Result<(), Box<Error>> {
     let mut args = env::args();
     args.next(); // skip $0
 
-    let mut vmaf_lines : Vec<FramesInfo> = Vec::with_capacity(4);
-    let mut ms_ssim_lines : Vec<FramesInfo> = Vec::with_capacity(4);
-    let mut psnr_lines : Vec<FramesInfo> = Vec::with_capacity(4);
+    let mut vmaf_lines: Vec<FramesInfo> = Vec::with_capacity(4);
+    let mut ms_ssim_lines: Vec<FramesInfo> = Vec::with_capacity(4);
+    let mut psnr_lines: Vec<FramesInfo> = Vec::with_capacity(4);
 
     for arg in args {
         let j_arg_filename = arg;
@@ -126,8 +148,11 @@ fn main() -> Result<(), Box<Error>> {
             process::exit(1);
         }
 
-        let j_filename = j_path.file_name().ok_or("Impossible")?
-            .to_str().ok_or("Impossible")?;
+        let j_filename = j_path
+            .file_name()
+            .ok_or("Impossible")?
+            .to_str()
+            .ok_or("Impossible")?;
 
         let j_bytes = fs::read(j_path)?;
         let frames: Frames = serde_json::from_slice(&*j_bytes)?;
