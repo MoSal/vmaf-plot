@@ -112,7 +112,7 @@ macro_rules! gen_figure {
                     Graph(offset),
                     &[TextColor(colors[color_idx]), Font("monospace", 0.0)],
                 );
-                fg_2d = { fg_2d }.lines(
+                fg_2d = { fg_2d }.lines_points(
                     &line.x,
                     &line.y,
                     &[
