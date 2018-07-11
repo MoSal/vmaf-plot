@@ -51,16 +51,15 @@ macro_rules! frames_info {
         vals.sort_by(|&v1, &v2| ((v1 * 10000.0) as isize).cmp(&((v2 * 10000.0) as isize)));
 
         let avg: f64 = vals.iter().sum::<f64>() / (vals.len() as f64);
-        let div: f64 = (vals.iter().map(|v| (v - avg).powf(2.0)).sum::<f64>()
-            / (vals.len() - 1) as f64)
-            .powf(0.5);
+        let var: f64 = vals.iter().map(|v| (v - avg).powf(2.0)).sum::<f64>()
+            / (vals.len() - 1) as f64;
 
         let label = format!(
             "{:2.3}  {:2.3}  {:2.3}  {:2.3}",
-            avg,
-            div,
             vals[0],
-            vals.last().unwrap()
+            vals.last().unwrap(),
+            avg,
+            var
         );
 
         let frames_info = FramesInfo {
@@ -97,7 +96,7 @@ macro_rules! gen_figure {
             let mut color_idx = 0;
             let mut offset = 0.22;
 
-            let status_line = format!("{:^6}  {:^6}  {:^6}  {:^6}", "avg", "div", "min", "max");
+            let status_line = format!("{:^6}  {:^6}  {:^6}  {:^6}", "min", "max", "avg", "var");
             fg_2d = { fg_2d }.label(
                 &status_line,
                 Graph(0.02),
