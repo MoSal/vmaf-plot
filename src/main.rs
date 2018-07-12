@@ -4,7 +4,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-use gnuplot::{AxesCommon, Caption, Color, Coordinate::*, Figure, LabelOption::*};
+use gnuplot::{AxesCommon, Caption, Color, Coordinate::*, Figure, LabelOption::*, AutoOption::Fix};
 
 use std::{env, error::Error, fs, path::Path, process};
 
@@ -13,6 +13,8 @@ struct FramesInfo {
     label: String,
     x: Vec<usize>,
     y: Vec<f64>,
+    min_y: f64,
+    max_y: f64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -50,14 +52,17 @@ macro_rules! frames_info {
         let mut vals = y.clone();
         vals.sort_by(|&v1, &v2| ((v1 * 10000.0) as isize).cmp(&((v2 * 10000.0) as isize)));
 
+        let min = vals[0];
+        let max = vals.last().unwrap();
+
         let avg: f64 = vals.iter().sum::<f64>() / (vals.len() as f64);
         let var: f64 = vals.iter().map(|v| (v - avg).powf(2.0)).sum::<f64>()
             / (vals.len() - 1) as f64;
 
         let label = format!(
             "{:2.3}  {:2.3}  {:2.3}  {:2.3}",
-            vals[0],
-            vals.last().unwrap(),
+            min,
+            max,
             avg,
             var
         );
@@ -67,6 +72,8 @@ macro_rules! frames_info {
             label,
             x: $frames.iter().map(|f| f.frame_idx).collect(),
             y,
+            min_y: min - 0.35*(max - min),
+            max_y: max + 0.35*(max - min),
         };
 
         $lines.push(frames_info);
@@ -85,8 +92,12 @@ macro_rules! gen_figure {
         let mut out_file = orig_metric_name;
         let mut fg = Figure::new();
         {
+            let min_y = ($lines.iter().map(|l| (l.min_y * 10000.0) as isize).min().unwrap() / 10000) as f64;
+            let max_y = ($lines.iter().map(|l| (l.max_y * 10000.0) as isize).max().unwrap() / 10000) as f64;
+
             let mut fg_2d = fg
                 .axes2d()
+                .set_y_range(Fix(min_y), Fix(max_y))
                 .set_x_label("Frames", &[])
                 .set_y_label(&metric_name.replace('_', "\\\\\\_"), &[]);
 
