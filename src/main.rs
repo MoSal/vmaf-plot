@@ -41,7 +41,7 @@ macro_rules! frames_info {
         let y: Vec<_> = if metric_name.ends_with("SSIM") {
             $frames
                 .iter()
-                .map(|f| 1.0 / (1.0 - f.metrics.$metric))
+                .map(|f| f.metrics.$metric * 1000.0 - 900.0)
                 .collect()
         } else {
             $frames.iter().map(|f| f.metrics.$metric).collect()
@@ -79,7 +79,7 @@ macro_rules! gen_figure {
         let mut metric_name = orig_metric_name.clone();
 
         if metric_name.ends_with("SSIM") {
-            metric_name = "1/(1-".to_owned() + &metric_name + ")";
+            metric_name = "1000*".to_owned() + &metric_name + " -900";
         }
 
         let mut out_file = orig_metric_name;
