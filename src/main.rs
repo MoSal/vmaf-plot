@@ -13,8 +13,8 @@ struct FramesInfo {
     label: String,
     x: Vec<usize>,
     y: Vec<f64>,
-    min_y: f64,
-    max_y: f64,
+    min: f64,
+    max: f64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -53,7 +53,7 @@ macro_rules! frames_info {
         vals.sort_by(|&v1, &v2| ((v1 * 10000.0) as isize).cmp(&((v2 * 10000.0) as isize)));
 
         let min = vals[0];
-        let max = vals.last().unwrap();
+        let max = *vals.last().unwrap();
 
         let avg: f64 = vals.iter().sum::<f64>() / (vals.len() as f64);
         let var: f64 = vals.iter().map(|v| (v - avg).powf(2.0)).sum::<f64>()
@@ -72,8 +72,8 @@ macro_rules! frames_info {
             label,
             x: $frames.iter().map(|f| f.frame_idx).collect(),
             y,
-            min_y: min - 0.35*(max - min),
-            max_y: max + 0.35*(max - min),
+            min,
+            max,
         };
 
         $lines.push(frames_info);
@@ -92,8 +92,11 @@ macro_rules! gen_figure {
         let mut out_file = orig_metric_name;
         let mut fg = Figure::new();
         {
-            let min_y = ($lines.iter().map(|l| (l.min_y * 10000.0) as isize).min().unwrap() / 10000) as f64;
-            let max_y = ($lines.iter().map(|l| (l.max_y * 10000.0) as isize).max().unwrap() / 10000) as f64;
+            let all_min = $lines.iter().map(|l| (l.min * 10000.0) as isize).min().unwrap() as f64 / 10000.0;
+            let all_max = $lines.iter().map(|l| (l.max * 10000.0) as isize).max().unwrap() as f64 / 10000.0;
+
+            let min_y = all_min - 0.45*(all_max - all_min);
+            let max_y = all_max + 0.40*(all_max - all_min);
 
             let mut fg_2d = fg
                 .axes2d()
