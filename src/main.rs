@@ -60,7 +60,7 @@ macro_rules! frames_info {
             / (vals.len() - 1) as f64;
 
         let label = format!(
-            "{:2.3}  {:2.3}  {:2.3}  {:2.3}",
+            "{:06.3}  {:06.3}  {:06.3}  {:06.3}",
             min,
             max,
             avg,
