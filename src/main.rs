@@ -56,14 +56,17 @@ macro_rules! frames_info {
         let max = *vals.last().unwrap();
 
         let avg: f64 = vals.iter().sum::<f64>() / (vals.len() as f64);
+        // Harmonic mean
+        let hm: f64 = 1.0 / (vals.iter().map(|&x| 1.0/x).sum::<f64>() / (vals.len() as f64));
         let var: f64 = vals.iter().map(|v| (v - avg).powf(2.0)).sum::<f64>()
             / (vals.len() - 1) as f64;
 
         let label = format!(
-            "{:06.3}  {:06.3}  {:06.3}  {:06.3}",
+            "{:06.3}  {:06.3}  {:06.3}  {:06.3}  {:06.3}",
             min,
             max,
             avg,
+            hm,
             var
         );
 
@@ -110,7 +113,7 @@ macro_rules! gen_figure {
             let mut color_idx = 0;
             let mut offset = 0.22;
 
-            let status_line = format!("{:^6}  {:^6}  {:^6}  {:^6}", "min", "max", "avg", "var");
+            let status_line = format!("{:^6}  {:^6}  {:^6}  {:^6}  {:^6}", "min", "max", "avg", "h-mean", "var");
             fg_2d = { fg_2d }.label(
                 &status_line,
                 Graph(0.02),
